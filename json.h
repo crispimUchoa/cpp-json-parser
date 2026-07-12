@@ -40,11 +40,14 @@ struct JsonValue {
 
     JsonValue(std::nullptr_t): value(nullptr) {};
     JsonValue(const Json& js);
+
+    JsonValue() : value(nullptr) {};
 };
 
 std::ostream& operator<<(std::ostream& out, const JsonValue& js);
 
 class Json{
+
     public:
         JsonObject object;
         Json(const std::string& jsonString);

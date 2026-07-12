@@ -20,7 +20,19 @@ std::ostream& operator<<(std::ostream& out, const JsonValue& js){
             out << "}";
 
         } else if constexpr(std::is_same_v<T, JsonArray>) {
-            out << "[]";
+            out << "[";
+            const size_t len = arg.size();
+            
+            for (size_t i {0}; i < len; i ++){
+                out << *arg.at(i);
+
+                if (i < len - 1){
+                    out << ", ";
+                };
+            };
+
+
+            out << "]";
         } else if constexpr(std::is_same_v<T, std::string>) {
             out << '\"' << arg << '\"';
         } else {
@@ -104,8 +116,8 @@ Json::Json(const std::string& jsonString) {
 
             const size_t valueSize {cursor - initValue}; 
             const JsonValue value {jsonString.substr(initValue, valueSize)};
-            this->attr(key, value);
             incrementCursor();
+            return value;
         };
 
         auto parseNum = [&](){
@@ -121,7 +133,7 @@ Json::Json(const std::string& jsonString) {
                 std::stoi(jsonString.substr(initValue, valueSize))
             };
 
-            this->attr(key, value);
+            return value;
 
         };
 
@@ -135,7 +147,8 @@ Json::Json(const std::string& jsonString) {
             if (jsonString.substr(initValue, valueSize) != "true") {
                 throw std::runtime_error("JSON Inválid value.");
             };
-            this->attr(key, true);
+            
+            return true;
         };
 
         auto parseFalse = [&](){
@@ -149,7 +162,7 @@ Json::Json(const std::string& jsonString) {
             if (jsonString.substr(initValue, valueSize) != "false") {
                 throw std::runtime_error("JSON Inválid value.");
             };
-            this->attr(key, false);
+            return false;
         };
 
         auto parseNull = [&](){
@@ -162,7 +175,59 @@ Json::Json(const std::string& jsonString) {
             if (jsonString.substr(initValue, valueSize) != "null") {
                 throw std::runtime_error("JSON Inválid value.");
             };
-            this->attr(key, nullptr);
+            return nullptr;
+        };
+
+        std::function<JsonValue()> parseValue;
+        parseValue = [&](){
+            JsonValue value;
+            if (currentChar == '\"'){
+            value = parseStr();
+            } else if (std::isdigit(currentChar)) {
+            value = parseNum();
+            } else if (currentChar == 't') {
+                value = parseTrue();
+            } else if (currentChar == 'f') {
+                value = parseFalse();
+            } else if (currentChar == 'n') {
+                value = parseNull();
+            } else if (currentChar == '['){
+                value.value = JsonArray();
+                incrementCursor();
+                while (currentChar != ']' && cursor < jsonString.length()){
+                    ignoreWS();
+                    JsonValue newValue {parseValue()};
+                    auto& arr = std::get<JsonArray>(value.value);
+                    arr.push_back(JsAtt(newValue));
+
+                    ignoreWS();
+                    if (currentChar == ']') break;
+                    
+                    if (currentChar != ',') {
+                        throw std::runtime_error("Expected \',\'");
+                    }
+
+                    incrementCursor();
+                };
+                incrementCursor();
+            } else if (currentChar == '{'){
+                size_t bracketsCounter = 0;
+                
+                Json newJson = Json(jsonString.substr(cursor, jsonString.length() - cursor - 1));
+                
+                do {
+                    ignoreWS();
+                    if (currentChar == '{') {
+                        ++bracketsCounter;
+                    } else if (currentChar == '}'){
+                        --bracketsCounter;
+                    };
+                    incrementCursor();
+                } while (bracketsCounter > 0);
+                value.value = newJson.object;
+            };
+
+            return value;
         };
 
         incrementCursor();
@@ -175,23 +240,20 @@ Json::Json(const std::string& jsonString) {
         incrementCursor();
         ignoreWS();
 
-        if (currentChar == '\"'){
-           parseStr();
-        } else if (std::isdigit(currentChar)) {
-           parseNum();
-        } else if (currentChar == 't') {
-            parseTrue();
-        } else if (currentChar == 'f') {
-            parseFalse();
-        } else if (currentChar == 'n') {
-            parseNull();
-        };
+        const JsonValue value = parseValue();
+        this->attr(key, value);
 
         ignoreWS();
 
-        if (currentChar != ',' && currentChar != '}'){
-            throw std::runtime_error("Expected '\"','\"'" );
-        }
+        if (currentChar == '}') break;
+
+        if (currentChar != ','){
+            std::cout << "Cursor: " << cursor << '\n';
+            std::cout << "Current : " << currentChar << '\n';
+            std::cout << "String : " << jsonString << "\n\n\n";
+            std::cout << "Parser : " << jsonString.substr(cursor) << "\n\n\n";
+            throw std::runtime_error("Expected ," );
+        };
         ignoreWS();
 
         incrementCursor();
