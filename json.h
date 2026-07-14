@@ -47,22 +47,25 @@ struct JsonValue {
 std::ostream& operator<<(std::ostream& out, const JsonValue& js);
 
 class Json{
-
     public:
-        JsonObject object;
-        Json(const std::string& jsonString);
-        Json();
-
-        void attr(const std::string& key, const JsonValue& value);
-
-        std::shared_ptr<JsonValue>& operator[](const std::string& key){
-            return (this->object)[key];
-        }
-
-        template <typename T>
-        T& get(const std::string& key){
-            return std::get<T>(object.at(key)->value);
-        }
+    JsonObject object;
+    Json(const std::string& jsonString);
+    Json();
+    
+    void attr(const std::string& key, const JsonValue& value);
+    
+    std::shared_ptr<JsonValue>& operator[](const std::string& key){
+        return (this->object)[key];
+    }
+    
+    template <typename T>
+    T& get(const std::string& key){
+        return std::get<T>(object.at(key)->value);
+    }
+    
+    const std::string stringfy();
+    
+    static Json loads(const std::string& filepath);
 
     private:
         void parse(const std::string& jsonString);

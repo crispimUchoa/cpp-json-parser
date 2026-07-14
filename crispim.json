@@ -1,0 +1,10 @@
+{ 
+        "nome": "Crispim", 
+        "mochila2":[12, [3]],
+        "mochila1": {
+            "mochila3": null
+            },
+        "idade": 22,
+        "altura": 171,
+        "nordestino": true
+    }

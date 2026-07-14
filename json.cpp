@@ -1,6 +1,9 @@
 #include "json.h"
 #include <memory>
 #include <cctype>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
 
 std::shared_ptr<JsonValue> JsAtt(JsonValue v) {
     return std::make_shared<JsonValue>(v);
@@ -14,8 +17,17 @@ std::ostream& operator<<(std::ostream& out, const JsonValue& js){
             out << "null";
         } else if constexpr (std::is_same_v<T, JsonObject>) {
             out << "{" << '\n';
-            for (const auto& [key, value] : arg){
-                out << '\t' << '\"' << key << "\"" << ": " << *value << '\n';
+
+            for (auto it = arg.begin(); it != arg.end(); ++it){
+                const auto& [key, value] = *it;
+
+                bool isLast = std::next(it) == arg.end();
+
+                out << '\t' << '\"' << key << "\"" << ": " << *value;
+                if (!isLast){
+                    out << ',';
+                };
+                out << '\n';
             }
             out << "}";
 
@@ -267,3 +279,33 @@ void Json::parse(const std::string& jsonString) {
 Json::Json(const std::string& jsonString){
     parse(jsonString);
 };
+
+Json Json::loads(const std::string& filepath){
+    std::ifstream file(filepath);
+
+    if (!file) {
+        throw std::runtime_error("Error: can not open file.");
+    };
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+
+    const std::string& jsonString =  buffer.str();
+    return Json(jsonString);
+}
+
+const std::string Json::stringfy(){
+    std::ostringstream oss;
+    oss << *this;
+    std::string fullString = oss.str();
+    fullString.erase(
+        std::remove(fullString.begin(), fullString.end(), '\n'),
+        fullString.end()
+    );
+    fullString.erase(
+        std::remove(fullString.begin(), fullString.end(), '\t'),
+        fullString.end()
+    );
+    
+    return fullString;
+}
