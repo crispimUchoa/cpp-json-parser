@@ -64,7 +64,7 @@ void Json::attr(const std::string& key, const JsonValue& value){
 
 
 
-Json::Json(const std::string& jsonString) {
+void Json::parse(const std::string& jsonString) {
     size_t cursor {0};
     char currentChar {jsonString.at(cursor)};
 
@@ -77,13 +77,17 @@ Json::Json(const std::string& jsonString) {
     };
 
     auto ignoreWS = [&](){
-        if (std::isspace(currentChar)){
+        while (std::isspace(currentChar)){
             incrementCursor();
         };
     };
 
     ignoreWS();
     if (currentChar != '{'){
+            std::cout << "Cursor: " << cursor << '\n';
+            std::cout << "Current : " << currentChar << '\n';
+            std::cout << "String : " << jsonString << "\n\n\n";
+            std::cout << "Parser : " << jsonString.substr(cursor) << "\n\n\n";
         throw std::runtime_error("Json must start with \'{\'");
     };
 
@@ -259,3 +263,7 @@ Json::Json(const std::string& jsonString) {
         incrementCursor();
     };
 };       
+
+Json::Json(const std::string& jsonString){
+    parse(jsonString);
+};

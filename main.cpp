@@ -4,10 +4,19 @@
 #include "json.h"
 
 int main(){
-    const std::string jsonString {"{ \"nome\":\"Crispim\",\"mochila2\":[12, [3]], \"mochila1\": {\"mochila3\": null}}"};
+    const std::string jsonString = R"(
+    { 
+        "nome": "Crispim", 
+        "mochila2":[12, [3]],
+        "mochila1": {
+            "mochila3": null
+            }
+    }
+    )";
 
     Json pessoa = Json(jsonString);
-
-    std::cout << pessoa <<  '\n';
+    pessoa.attr("nome", "paulo");
+    std::string nome = pessoa.get<std::string>("nome");
+    std::cout << nome <<  '\n';
     return 0;
 }

@@ -59,6 +59,13 @@ class Json{
             return (this->object)[key];
         }
 
+        template <typename T>
+        T& get(const std::string& key){
+            return std::get<T>(object.at(key)->value);
+        }
+
+    private:
+        void parse(const std::string& jsonString);
         
 };
 
